@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Roleplay Skibidi Fake AI</title>
+<style>
+body{
+    margin:0;
+    height:100vh;
+    display:flex;
+    flex-direction:column;
+    background:#333;
+    color:white;
+    font-family:Arial;
+}
+#top{
+    text-align:center;
+    padding:8px;
+    background:#111;
+    color:yellow;
+    font-weight:bold;
+}
+#admBtn{
+    position:fixed;
+    top:8px;
+    right:8px;
+    background:black;
+    color:yellow;
+    border:2px solid yellow;
+    border-radius:8px;
+    padding:6px 10px;
+    cursor:pointer;
+    font-weight:bold;
+    z-index:100;
+}
+#loginBox{
+    display:none;
+    position:fixed;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    background:#222;
+    border:2px solid yellow;
+    border-radius:10px;
+    padding:15px;
+    z-index:200;
+}
+#loginBox input, #loginBox button{
+    width:100%;
+    margin-top:6px;
+    padding:6px;
+    border-radius:5px;
+    border:none;
+}
+#characters{
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:center;
+    padding:8px;
+}
+.char{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    margin:6px;
+    font-size:12px;
+}
+.char img{
+    width:65px;
+    height:65px;
+    border-radius:50%;
+    border:3px solid transparent;
+    cursor:pointer;
+}
+.char img.selected{
+    border-color:yellow;
+}
+#chat{
+    flex:1;
+    background:#555;
+    overflow-y:auto;
+    padding:10px;
+}
+.msg{
+    display:flex;
+    align-items:center;
+    margin-bottom:8px;
+}
+.msg img{
+    width:36px;
+    height:36px;
+    border-radius:50%;
+    margin-right:8px;
+}
+#inputArea{
+    display:flex;
+    padding:10px;
+    background:#444;
+}
+#inputArea input{
+    flex:1;
+    padding:10px;
+    border:none;
+    border-radius:5px;
+}
+#inputArea button{
+    margin-left:5px;
+    padding:10px;
+    border:none;
+    border-radius:5px;
+    background:#666;
+    color:white;
+    cursor:pointer;
+}
+/* PAINEL ADMIN */
+#devPanel{
+    position:fixed;
+    right:20px;
+    top:80px;
+    background:#111;
+    border:2px solid yellow;
+    border-radius:10px;
+    padding:10px;
+    width:230px;
+    display:none;
+    z-index:150;
+}
+#devHeader{
+    cursor:move;
+    text-align:center;
+    font-weight:bold;
+    color:yellow;
+}
+#devPanel input, #devPanel button{
+    width:100%;
+    margin-top:6px;
+    padding:6px;
+    border-radius:5px;
+    border:none;
+}
+#devPanel button{
+    background:#666;
+    color:white;
+    cursor:pointer;
+}
+</style>
+</head>
+<body>
+
+<div id="top">Roleplay Skibidi Fake AI</div>
+<button id="admBtn">ADM</button>
+
+<div id="loginBox">
+    <h3>Login ADM</h3>
+    <input id="admPass" type="password" placeholder="Senha">
+    <button id="loginAdm">Entrar</button>
+</div>
+
+<div id="characters"></div>
+<div id="chat"></div>
+
+<div id="inputArea">
+    <input id="msgInput" placeholder="Digite sua mensagem...">
+    <button id="sendBtn">Enviar</button>
+</div>
+
+<!-- PAINEL ADMIN -->
+<div id="devPanel">
+    <div id="devHeader">PAINEL ADMIN 👑</div>
+    <button id="closeAdm">❌ Fechar Painel</button>
+
+    <input id="devName" placeholder="Nome do personagem">
+    <input id="devAvatar" placeholder="URL do avatar">
+
+    <button id="addChar">Adicionar</button>
+    <button id="editChar">Editar selecionado</button>
+    <button id="delChar">Excluir selecionado</button>
+
+    <hr>
+    <input id="bgInput" placeholder="Cor ou imagem">
+    <button id="changeBg">Mudar background</button>
+</div>
+
+<script>
+const DEV_PASSWORD = "developerbonitao123";
+let isDev = false;
+
+/* PERSONAGENS PADRÃO */
+let characters = [
+ {name:"Skibidi Toilet",avatar:"https://i.imgur.com/SkibidiToilet.png"},
+ {name:"G-Toilet",avatar:"https://i.imgur.com/GToilet.png"},
+ {name:"Scientist Toilet",avatar:"https://i.imgur.com/4pR6p6g.png"},
+ {name:"DJ Skibidi",avatar:"https://i.imgur.com/DJSkibidi.png"},
+ {name:"Cameraman",avatar:"https://i.imgur.com/Cameraman.png"},
+ {name:"Titan Cameraman",avatar:"https://i.imgur.com/TitanCameraman.png"},
+ {name:"Speakerman",avatar:"https://i.imgur.com/Speakerman.png"},
+ {name:"Titan Speakerman",avatar:"https://i.imgur.com/TitanSpeakerman.png"},
+ {name:"TV Man",avatar:"https://i.imgur.com/TVMan.png"},
+ {name:"Titan TV Man",avatar:"https://i.imgur.com/TitanTVMan.png"}
+];
+
+let current = characters[0];
+
+/* ELEMENTOS */
+const charDiv = document.getElementById("characters");
+const chat = document.getElementById("chat");
+const msgInput = document.getElementById("msgInput");
+const sendBtn = document.getElementById("sendBtn");
+const admBtn = document.getElementById("admBtn");
+const loginBox = document.getElementById("loginBox");
+const admPass = document.getElementById("admPass");
+const loginAdm = document.getElementById("loginAdm");
+const devPanel = document.getElementById("devPanel");
+const devHeader = document.getElementById("devHeader");
+const closeAdm = document.getElementById("closeAdm");
+const devName = document.getElementById("devName");
+const devAvatar = document.getElementById("devAvatar");
+const addChar = document.getElementById("addChar");
+const editChar = document.getElementById("editChar");
+const delChar = document.getElementById("delChar");
+const bgInput = document.getElementById("bgInput");
+const changeBg = document.getElementById("changeBg");
+
+/* RENDER PERSONAGENS */
+function renderChars(){
+    charDiv.innerHTML="";
+    characters.forEach(c=>{
+        const d=document.createElement("div");
+        d.className="char";
+
+        const img=document.createElement("img");
+        img.src=c.avatar;
+        if(c===current) img.classList.add("selected");
+        img.onclick=()=>{current=c;renderChars();};
+
+        const name=document.createElement("span");
+        name.innerText=c.name;
+
+        d.appendChild(img);
+        d.appendChild(name);
+        charDiv.appendChild(d);
+    });
+}
+
+/* CHAT */
+function addMsg(name, avatar, text){
+    const m=document.createElement("div");
+    m.className="msg";
+    if(avatar){
+        const i=document.createElement("img");
+        i.src=avatar;
+        m.appendChild(i);
+    }
+    const s=document.createElement("span");
+    s.innerHTML="<b>"+name+":</b> "+text;
+    m.appendChild(s);
+    chat.appendChild(m);
+    chat.scrollTop=chat.scrollHeight;
+}
+
+function gerarResposta(char){
+    let n = char.name.toLowerCase();
+    let r = "Olá.";
+
+    if(n.endsWith("toilet")) r = "Skibidi skibidi " + r;
+    else if(n.includes("cameraman")) r = "Estamos monitorando você.";
+    else if(n.includes("speakerman")) r = "⚠️ SOM NO MÁXIMO!!! ⚠️";
+    else if(n.includes("tv")) r = "S̷I̴N̶A̷L̴ ̷C̷O̴R̸R̷O̷M̴P̷I̷D̶O̷";
+
+    if(n.includes("titan")) r = r.toUpperCase();
+
+    return r;
+}
+
+/* ENVIO DE MENSAGEM */
+sendBtn.onclick = ()=>{
+    if(!msgInput.value.trim()) return;
+    addMsg("Você", null, msgInput.value);
+    setTimeout(()=>{
+        addMsg(current.name, current.avatar, gerarResposta(current));
+    },300);
+    msgInput.value="";
+};
+
+msgInput.addEventListener("keydown", e=>{
+    if(e.key==="Enter") sendBtn.click();
+});
+
+/* ADM */
+admBtn.onclick=()=>{
+    if(isDev) devPanel.style.display="block";
+    else loginBox.style.display="block";
+};
+
+loginAdm.onclick=()=>{
+    if(admPass.value===DEV_PASSWORD){
+        isDev=true;
+        loginBox.style.display="none";
+        devPanel.style.display="block";
+        document.getElementById("top").innerText="MODO ADMIN ATIVO 👑";
+    } else alert("Senha incorreta");
+};
+
+closeAdm.onclick=()=>devPanel.style.display="none";
+
+/* FUNÇÕES ADM */
+addChar.onclick=()=>{
+    if(devName.value && devAvatar.value){
+        characters.push({name:devName.value,avatar:devAvatar.value});
+        current = characters[characters.length-1];
+        renderChars();
+    }
+};
+
+editChar.onclick=()=>{
+    if(current){
+        if(devName.value) current.name = devName.value;
+        if(devAvatar.value) current.avatar = devAvatar.value;
+        renderChars();
+    }
+};
+
+delChar.onclick=()=>{
+    characters = characters.filter(c=>c!==current);
+    current = characters[0] || null;
+    renderChars();
+};
+
+changeBg.onclick=()=>{
+    if(bgInput.value){
+        document.body.style.background = bgInput.value;
+    }
+};
+
+/* DRAG PANEL */
+let drag=false,offX=0,offY=0;
+devHeader.onmousedown=e=>{
+    drag=true;
+    offX=e.clientX-devPanel.offsetLeft;
+    offY=e.clientY-devPanel.offsetTop;
+};
+document.onmousemove=e=>{
+    if(drag){
+        devPanel.style.left=(e.clientX-offX)+"px";
+        devPanel.style.top=(e.clientY-offY)+"px";
+    }
+};
+document.onmouseup=()=>drag=false;
+
+renderChars();
+</script>
+</body>
+</html>
