@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Chat Skibidi Toilet</title>
+<style>
+/* ====== Geral ====== */
+body {
+    background-color: #333;
+    color: #fff;
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    margin: 0;
+}
+
+/* ====== Badge ====== */
+#developerBadge {
+    text-align: center;
+    padding: 5px;
+    color: yellow;
+    font-weight: bold;
+}
+
+/* ====== Personagens ====== */
+#characters {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 10px;
+}
+
+.char-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 5px;
+}
+
+#characters img {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    border: 3px solid transparent;
+    cursor: pointer;
+}
+
+#characters img.selected {
+    border-color: yellow;
+}
+
+#characters button {
+    margin-top: 3px;
+    font-size: 10px;
+    padding: 2px 5px;
+    cursor: pointer;
+    border-radius: 3px;
+    border: none;
+    background: #666;
+    color: #fff;
+}
+
+/* ====== Chat ====== */
+#chat {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+    background: #555;
+    border-top: 2px solid #444;
+}
+
+.message {
+    display: flex;
+    margin-bottom: 10px;
+    align-items: center;
+}
+
+.message img {
+    width: 40px;
+    height: 40px;
+    margin-right: 10px;
+    border-radius: 50%;
+}
+
+/* ====== Input ====== */
+#inputArea {
+    display: flex;
+    padding: 10px;
+    background: #444;
+}
+
+#inputArea input {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    margin-right: 5px;
+}
+
+#inputArea button {
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    background: #666;
+    color: #fff;
+    cursor: pointer;
+}
+
+/* ====== Modal ====== */
+#modalOverlay {
+    position: fixed;
+    top:0; left:0; right:0; bottom:0;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+#modal {
+    background: #222;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+}
+
+#modal input {
+    padding: 10px;
+    margin-top: 10px;
+    border-radius: 5px;
+    border: none;
+    width: 80%;
+}
+
+#modal button {
+    margin-top: 10px;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    background: yellow;
+    color: #000;
+    cursor: pointer;
+    margin-right: 5px;
+}
+
+/* ====== Responsivo ====== */
+@media(max-width:500px){
+    #characters img { width: 50px; height: 50px; }
+    #characters button { font-size: 8px; padding: 2px; }
+    #inputArea input { padding: 8px; }
+    #inputArea button { padding: 8px; }
+    #modal input { width: 70%; padding: 8px; }
+    #modal button { padding: 8px 10px; font-size: 12px; }
+}
+</style>
+</head>
+<body>
+
+<div id="developerBadge">Chat Skibidi Toilet - Modo Usuário</div>
+<div id="characters"></div>
+<div id="chat"></div>
+
+<div id="inputArea">
+    <input type="text" id="messageInput" placeholder="Digite sua mensagem...">
+    <button id="sendBtn">Enviar</button>
+</div>
+
+<!-- ====== Modal senha ====== -->
+<div id="modalOverlay">
+    <div id="modal">
+        <h3>Digite a senha do desenvolvedor</h3>
+        <input type="password" id="devPassInput" placeholder="Senha">
+        <br>
+        <button id="devPassBtn">Entrar</button>
+        <button id="devCancelBtn">Cancelar</button>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+    // ======= Variáveis =======
+    const devPassword = "4444";
+    let isDeveloper = false;
+    let titanSpeakermanTrapped = false;
+    let selectedCharacter = null;
+
+    // ======= Personagens =======
+    const characters = [
+        {name:"Skibidi Toilet", avatar:"https://i.imgur.com/SkibidiToilet.png"},
+        {name:"DJ Skibidi Toilet", avatar:"https://i.imgur.com/DJSkibidi.png"},
+        {name:"Skibidi Policeman", avatar:"https://i.imgur.com/PoliceSkibidi.png"},
+        {name:"G-Toilet", avatar:"https://i.imgur.com/GToilet.png"},
+        {name:"Cameraman", avatar:"https://i.imgur.com/Cameraman.png"},
+        {name:"Titan Cameraman", avatar:"https://i.imgur.com/TitanCameraman.png"},
+        {name:"Speakerman", avatar:"https://i.imgur.com/Speakerman.png"},
+        {name:"Titan Speakerman", avatar:"https://i.imgur.com/TitanSpeakerman.png"},
+        {name:"TV Man", avatar:"https://i.imgur.com/TVMan.png"},
+        {name:"Energized TV Man", avatar:"https://i.imgur.com/EnergizedTVMan.png"},
+        {name:"Titan TV Man", avatar:"https://i.imgur.com/TitanTVMan.png"}
+    ];
+    selectedCharacter = characters[0];
+
+    // ======= Renderiza personagens =======
+    function renderCharacters(){
+        const div = document.getElementById("characters");
+        div.innerHTML = "";
+
+        characters.forEach(char => {
+            const container = document.createElement("div");
+            container.className = "char-container";
+
+            const img = document.createElement("img");
+            img.src = char.avatar;
+            img.alt = char.name;
+            img.title = char.name;
+            img.onclick = () => {
+                selectedCharacter = char;
+                document.querySelectorAll("#characters img").forEach(i => i.classList.remove("selected"));
+                img.classList.add("selected");
+            };
+            if(char===selectedCharacter) img.classList.add("selected");
+            container.appendChild(img);
+
+            if(isDeveloper){
+                const btn = document.createElement("button");
+                btn.innerText="Alterar Foto";
+                btn.onclick = ()=>{
+                    const url = prompt("Cole o link da nova imagem de "+char.name);
+                    if(url){ char.avatar=url; renderCharacters(); }
+                };
+                container.appendChild(btn);
+            }
+
+            div.appendChild(container);
+        });
+
+        if(isDeveloper){
+            const addBtn = document.createElement("button");
+            addBtn.innerText = "Adicionar Personagem";
+            addBtn.onclick = ()=>{
+                const name = prompt("Nome do personagem:");
+                const avatar = prompt("URL do avatar:");
+                if(name && avatar){ characters.push({name, avatar}); renderCharacters(); }
+            };
+            div.appendChild(addBtn);
+        }
+    }
+
+    // ======= Chat =======
+    const chatDiv = document.getElementById("chat");
+
+    function addMessage(sender, avatar, text){
+        if(!text) return;
+        const div = document.createElement("div");
+        div.className = "message";
+
+        if(avatar){
+            const img = document.createElement("img");
+            img.src = avatar;
+            img.alt = sender;
+            img.title = sender;
+            div.appendChild(img);
+        } else {
+            const spacer = document.createElement("div");
+            spacer.style.width = "40px";
+            div.appendChild(spacer);
+        }
+
+        const span = document.createElement("span");
+        span.innerHTML = `<strong>${sender}:</strong> ${text}`;
+        div.appendChild(span);
+
+        chatDiv.appendChild(div);
+        chatDiv.scrollTop = chatDiv.scrollHeight;
+    }
+
+    function generateResponse(char, msg){
+        msg = msg.toLowerCase().trim();
+
+        // ===== Titan Speakerman =====
+        if(char.name === "Titan Speakerman"){
+            if(titanSpeakermanTrapped) return "";
+            if(msg==="eu sou você e você sou eu") return "OQUE?";
+            if(msg==="nós somos um só"){ 
+                titanSpeakermanTrapped = true;
+                return "…";
+            }
+            if(msg === "foda-se") return "Calma aí paizão"; // só o personagem responde
+            return ["O som colossal!","Titan Speakerman domina!","Ondas sonoras fortes!"][Math.floor(Math.random()*3)];
+        }
+
+        // ===== Outros personagens =====
+        if(msg === "foda-se") return "Calma aí paizão"; // só o personagem que você está conversando
+
+        const repliesByCharacter = {
+            "Skibidi Toilet":["Skibidi bop bop!", "Você me entende?", "Toilet power!"],
+            "DJ Skibidi Toilet":["DJ skibidi remix!", "Bum bum bum...", "Vamos dançar!"],
+            "Skibidi Policeman":["Ordem e justiça!", "Cuidado aí!", "Nada de confusão!"],
+            "G-Toilet":["Eu sou o líder!", "Prepare-se para a batalha!", "Imbatível!"],
+            "Cameraman":["Filmando tudo!", "Protegendo os heróis!", "Capturando a ação!"],
+            "Speakerman":["Bzzzz Bzzzz!", "O som domina!", "Ouça meu poder!"],
+            "Titan Cameraman":["Titan power ativado!", "Nada escapa da minha lente!", "Gigante imponente!"],
+            "TV Man":["Transmissão ativa.", "Está vendo a tela?", "Tecnologia supreme."],
+            "Energized TV Man":["Energia máxima!", "Tela brilhando!", "O poder da TV!"],
+            "Titan TV Man":["Titan transmitindo!", "Ninguém escapa da minha tela!", "Imponente!"]
+        };
+
+        const replies = repliesByCharacter[char.name] || ["..."];
+
+        if(msg.includes("oi") || msg.includes("olá")) return "Oi! Como vai?";
+        if(msg.includes("batalha") || msg.includes("lutar")) return replies[Math.floor(Math.random()*replies.length)]+" Prepare-se!";
+        if(msg.includes("dança") || msg.includes("música")) return replies[Math.floor(Math.random()*replies.length)]+" Vamos dançar!";
+        return replies[Math.floor(Math.random()*replies.length)];
+    }
+
+    function sendMessage(){
+        const input = document.getElementById("messageInput");
+        const text = input.value.trim();
+        if(!text) return;
+        addMessage("Você", null, text);
+        input.value="";
+        input.focus();
+        const resp = generateResponse(selectedCharacter, text);
+        if(resp) setTimeout(()=>addMessage(selectedCharacter.name, selectedCharacter.avatar, resp), 400);
+    }
+
+    // ======= Eventos =======
+    document.getElementById("sendBtn").onclick = sendMessage;
+    document.getElementById("messageInput").addEventListener("keydown", e=>{
+        if(e.key==="Enter") sendMessage();
+    });
+
+    // ======= Modo Desenvolvedor =======
+    const modalOverlay = document.getElementById("modalOverlay");
+    const devPassBtn = document.getElementById("devPassBtn");
+    const devCancelBtn = document.getElementById("devCancelBtn");
+
+    devPassBtn.onclick = ()=>{
+        const input = document.getElementById("devPassInput");
+        if(input.value === devPassword){
+            isDeveloper = true;
+            document.getElementById("developerBadge").innerText = "Você é o Desenvolvedor do App 👑";
+            alert("Modo desenvolvedor ativado ✅");
+            modalOverlay.style.display = "none";
+            renderCharacters();
+        } else {
+            alert("Senha incorreta!");
+            input.value = "";
+        }
+    };
+
+    devCancelBtn.onclick = ()=>{
+        modalOverlay.style.display = "none";
+    };
+
+    // ======= Inicialização =======
+    renderCharacters();
+
+});
+</script>
+
+</body>
+</html>
